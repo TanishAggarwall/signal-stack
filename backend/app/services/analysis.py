@@ -2,7 +2,7 @@
 signal whose quote is not found in the stored text is rejected. Facts and interpretation are stored apart."""
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from .research import profile_text
 log = logging.getLogger("analysis")
 BATCH = 4
 TEXT_LIMIT = 2600
+STALE_DAYS = 60
 
 
 def _terms(db: Session, company: Company) -> tuple[set[str], list[str]]:
@@ -86,6 +87,9 @@ Analyse each document below for {company.name}'s leadership. A document is a SIG
 development (something happened or changed: launch, price change, policy, regulation, funding, partnership,
 customer complaint pattern, market shift, data release) that plausibly matters to THIS business. General
 evergreen advice, SEO listicles, ads and irrelevant news are NOT signals.
+Today is {datetime.utcnow():%Y-%m-%d}. A development that happened more than {STALE_DAYS} days ago is old news and NOT a
+signal, even if the page was published recently (e.g. an article recapping a 2024 launch). Give event_date whenever
+the text states or clearly implies when it happened.
 
 For each signal:
 - FACTS (from the document only): title, what_happened (1-2 sentences, no opinion), event_date (YYYY-MM-DD or ""),
@@ -132,6 +136,10 @@ Return JSON: {{"results": [{{"doc": index, "is_signal": true/false, "reason_if_n
                     ev = datetime.fromisoformat(r["event_date"][:10])
                 except ValueError:
                     pass
+            if ev and ev < datetime.utcnow() - timedelta(days=STALE_DAYS):
+                stats["old_news"] = stats.get("old_news", 0) + 1
+                d.relevant = False
+                continue  # real, but not a new development
             comp = (r.get("competitor") or "").strip()
             cat = r.get("category") if r.get("category") in ("customers", "competitors", "market") else (s.category if s else "market")
             db.add(Signal(

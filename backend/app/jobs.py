@@ -30,6 +30,31 @@ class JobContext:
             j.stats = dict(self.stats)
 
 
+_running = 0
+_running_lock = threading.Lock()
+
+
+def _keep_awake():
+    """Free hosts (Render) stop an idle instance after ~15 min without inbound HTTP traffic, which would kill a
+    long crawl. While any job runs, ping our own public URL so the instance stays up until the job finishes."""
+    import os
+    import time
+
+    import httpx
+    url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("PUBLIC_API_URL")
+    if not url:
+        return
+    while True:
+        time.sleep(240)
+        with _running_lock:
+            if _running == 0:
+                return
+        try:
+            httpx.get(url.rstrip("/") + "/api/health", timeout=20)
+        except httpx.HTTPError:
+            pass
+
+
 def start_job(company_id, job_type: str, fn, trigger: str = "manual", background: bool = True) -> int:
     """fn(ctx) does the work. Returns job id. Only one heavy job per company at a time."""
     with session_scope() as db:
@@ -39,6 +64,19 @@ def start_job(company_id, job_type: str, fn, trigger: str = "manual", background
         job_id = j.id
 
     def run():
+        global _running
+        with _running_lock:
+            _running += 1
+            first = _running == 1
+        if first:
+            threading.Thread(target=_keep_awake, daemon=True, name="keep-awake").start()
+        try:
+            _run_locked()
+        finally:
+            with _running_lock:
+                _running -= 1
+
+    def _run_locked():
         lock = _lock_for(company_id)
         with lock:
             ctx = JobContext(job_id)
