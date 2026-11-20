@@ -1,0 +1,25 @@
+# Render Blueprint (free plan) for the Signal Stack API.
+# Free web services sleep when idle; .github/workflows/scheduled-runs.yml triggers the weekly brief and
+# monthly audit through the protected /api/cron endpoint so scheduled runs still happen.
+services:
+  - type: web
+    name: signal-stack-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CRON_TOKEN
+        generateValue: true
+      - key: ENABLE_SCHEDULER
+        value: "1"

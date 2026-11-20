@@ -1,0 +1,23 @@
+# secrets
+.env
+*.env.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+backend/.venv/
+*.db
+*.db-journal
+backend/uploads/
+backend/.cache/
+
+# node
+node_modules/
+frontend/dist/
+
+# local
+server.log
+frontend/README.md
+*.db-shm
+*.db-wal

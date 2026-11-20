@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Visual language: soft neutral canvas, white 22px cards, lavender accents, display headings (Manrope) over
+   DM Sans body, pill buttons, pastel icon chips, one dark chart card and one lime "calm" card per view. */
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", "DM Sans", ui-sans-serif, sans-serif;
+  --color-brand-50: #f4effe;
+  --color-brand-100: #ebe2fd;
+  --color-brand-200: #d8c7fb;
+  --color-brand-300: #bba0f8;
+  --color-brand-400: #9a72f5;
+  --color-brand-500: #7b3ff2;
+  --color-brand-600: #6a2fe0;
+  --color-brand-700: #5622bd;
+  --color-lime-soft: #e9f4d4;
+  --color-lime-ink: #6f9a2f;
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-card2: var(--card2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-night: var(--night);
+}
+
+:root {
+  --canvas: #f6f7fa;
+  --card: #ffffff;
+  --card2: #f5f3fb;
+  --line: #ecedf2;
+  --ink: #15131d;
+  --muted: #7c7a88;
+  --night: #19181e;
+  color-scheme: light;
+}
+.dark {
+  --canvas: #0c0b10;
+  --card: #16151c;
+  --card2: #1f1d28;
+  --line: #2a2833;
+  --ink: #f3f2f7;
+  --muted: #9896a5;
+  --night: #050507;
+  color-scheme: dark;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, .font-display { font-family: var(--font-display); }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.tag { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.hero-grad { background: radial-gradient(120% 140% at 85% 30%, #ddd0fb 0%, #ece5fd 45%, #f6f2ff 100%); }
+.dark .hero-grad { background: radial-gradient(120% 140% at 85% 30%, #3a2a6b 0%, #241b42 50%, #1a1530 100%); }
+.orb { background: radial-gradient(circle at 35% 30%, #c5a8ff 0%, #9a68f7 45%, #7b3ff2 100%); box-shadow: 0 20px 60px -10px rgba(123,63,242,.55); }
+* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }

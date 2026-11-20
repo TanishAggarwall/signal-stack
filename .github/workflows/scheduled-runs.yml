@@ -1,0 +1,31 @@
+# Free external scheduler. The API also schedules jobs in-process (APScheduler), but free hosts sleep,
+# so this workflow wakes the API and triggers the runs. Set repository secrets API_URL and CRON_TOKEN.
+name: Scheduled intelligence runs
+
+on:
+  schedule:
+    - cron: "30 1 * * 1"   # A. Weekly brief: Monday 01:30 UTC = 07:00 IST
+    - cron: "30 1 1 * *"   # B. Monthly Signal Stack audit: 1st of each month
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "weekly or audit"
+        default: weekly
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake the API (free hosts sleep)
+        run: |
+          for i in 1 2 3 4 5 6; do
+            curl -sf "${{ secrets.API_URL }}/api/health" && break
+            sleep 20
+          done
+      - name: Trigger run
+        run: |
+          KIND="${{ github.event.inputs.kind }}"
+          if [ -z "$KIND" ]; then
+            if [ "${{ github.event.schedule }}" = "30 1 1 * *" ]; then KIND=audit; else KIND=weekly; fi
+          fi
+          curl -sf -X POST -H "X-Cron-Token: ${{ secrets.CRON_TOKEN }}" "${{ secrets.API_URL }}/api/cron/$KIND"
